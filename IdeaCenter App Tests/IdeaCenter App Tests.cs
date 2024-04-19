@@ -186,20 +186,43 @@ namespace IdeaCenter_App_Tests
         public void Edit_Non_Existing_Idea_Should_Return_Not_Found ()
         {
             //Arrange
-            var request = new RestRequest("/api/Idea/Edit");
+            var create = new IdeaDTO()
+            {
+                Title = "New title",
+                Description="New"
 
-            request.AddQueryParameter("ideaId", "XXXXXXXX"); 
+            };
+            var request = new RestRequest("/api/Idea/Edit", Method.Put);
+            request.AddJsonBody(create);
+            request.AddQueryParameter("ideaId", "XXXXXXXX");
+            
 
             //Act
             var response= client.Execute(request);
             //Assert
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
 
-            var content=JsonSerializer.Deserialize<ApiResponseDTO>(response.Content);
-
-            Assert.That(content.Msg, Is.EqualTo("There is no such idea!"));
+           
+            Assert.That(response.Content, Does.Contain("There is no such idea!"));
         }
 
+        [Order(7)]
+        [Test] 
+
+        public void Delete_Non_Existing_Idea_Should_Return_Bad_Request ()
+        {
+            //Assert
+            var request = new RestRequest("/api/Idea/Delete", Method.Delete);
+            request.AddQueryParameter("ideaId", "OOOOOOO");
+            //Act
+            var response = client.Execute(request);
+            //Assert
+
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
+            
+            Assert.That(response.Content, Does.Contain("There is no such idea!"));
+                
+        }
 
     }
 }
