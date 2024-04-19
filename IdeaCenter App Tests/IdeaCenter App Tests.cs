@@ -13,7 +13,7 @@ namespace IdeaCenter_App_Tests
         private const string EMAIL = "iv@test.com";
         private const string PASSWORD = "123456";
 
-        private string lastID;
+        private static string lastID;
 
        [OneTimeSetUp]
 
@@ -99,17 +99,107 @@ namespace IdeaCenter_App_Tests
             //Act
             var response = client.Execute(request);
 
-            var content=JsonSerializer.Deserialize<List<ApiResponseDTO>>(response.Content);
-            lastID = content.LastOrDefault().IdeaID;
+            var content = JsonSerializer.Deserialize<ApiResponseDTO[]>(response.Content);
+            
 
             //Assert 
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
-            Assert.That(content.Count, Is.GreaterThan(0));
+            
+            Assert.That(content.Length, Is.GreaterThan(0));
+
+            lastID = content[content.Length - 1].IdeaID;
 
         }
 
-        
+        [Order(3)]
+        [Test] 
+
+        public void Edit_the_last_Idea_Created_Should_Return_OK ()
+        {
+            //Arrange
+            var edited = new IdeaDTO ()
+            {
+                Title = "Edited Idea",
+                Description = "The idea was edited last month"
+                
+            };
+            var request = new RestRequest("/api/Idea/Edit");
+
+            request.AddQueryParameter("ideaId", lastID);
+
+            request.AddJsonBody(edited);
+
+
+            //Act
+            var response = client.Execute(request, Method.Put);
+
+            //Assert
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+
+            var content = JsonSerializer.Deserialize<ApiResponseDTO>(response.Content);
+            Assert.That(content.Msg, Is.EqualTo("Edited successfully"));
+        }
+
+        [Order(4)]
+        [Test] 
+
+        public void Delete_Created_Idea_Should_Correctlly_Delete_The_Idea ()
+        {
+            //Arrange
+            var request = new RestRequest("/api/Idea/Delete", Method.Delete);
+            request.AddQueryParameter("ideaId", lastID);
+
+            //Act
+            var response = client.Execute(request);
+
+            //Assert
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+
+            Assert.That(response.Content, Does.Contain("The idea is deleted!"));
+        }
+        [Order(5)]
+        [Test] 
+
+        public void Create_An_Idea_Without_Required_Field_Should_Return_Bad_Request ()
+        {
+            //Arrange
+            
+            var create= new IdeaDTO()
+            {  
+                Title="New title"
+
+            };
+            var request = new RestRequest("/api/Idea/Create", Method.Post);
+            request.AddJsonBody(create);
+
+            //Act
+            var response = client.Execute(request);
+
+            //Assert
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
+
+        }
+        [Order(6)]
+        [Test]
+
+        public void Edit_Non_Existing_Idea_Should_Return_Not_Found ()
+        {
+            //Arrange
+            var request = new RestRequest("/api/Idea/Edit");
+
+            request.AddQueryParameter("ideaId", "XXXXXXXX"); 
+
+            //Act
+            var response= client.Execute(request);
+            //Assert
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
+
+            var content=JsonSerializer.Deserialize<ApiResponseDTO>(response.Content);
+
+            Assert.That(content.Msg, Is.EqualTo("There is no such idea!"));
+        }
+
 
     }
 }

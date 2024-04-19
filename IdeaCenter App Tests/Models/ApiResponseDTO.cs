@@ -12,7 +12,7 @@ namespace IdeaCenter_App_Tests.Models
         [JsonPropertyName("msg")]
         public string Msg { get; set; }
 
-        [JsonPropertyName("ideaId")]
+        [JsonPropertyName("id")]
 
         public string IdeaID { get; set; }
     }
